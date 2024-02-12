@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ワインの特徴選択</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 30px; }
+  .button { font-size: 30px; margin: 5px; padding: 5px 10px; border: 1px solid #ccc; cursor: pointer; }
+  .copyButton { padding: 10px 20px; font-size: 30px; cursor: pointer; }
+  .lineBreak { clear: both; display: block; }
+</style>
+</head>
+<body>
+
+<div id="content"></div>
+<button class="copyButton" onclick="copyToClipboard()">クリップボードにコピー</button>
+
+<script>
+const categories = [
+  { title: "外観" ,items : []},
+  { title: "色の濃さ", items: ["淡い", "中程度", "濃い"] },
+  { title: "色（白）", items: ["レモン色", "黄金色", "琥珀色"] },
+  { title: "色（ロゼ）", items: ["ピンク色", "オレンジがかったピンク色", "オレンジ色"] },
+  { title: "色（赤）", items: ["紫色", "ルビー色", "ガーネット色", "トーニー色"] },
+  { title: "香り" ,items : []},
+  { title: "香りの強さ", items: ["弱い", "中程度", "強い"] },
+  { title: "第一の香り",items : [] },
+  { title: "花", items: ["果樹の花", "バラ", "スミレ"] },
+  { title: "緑色系果実", items: ["リンゴ", "洋ナシ", "西洋スグリ", "ブドウ"] },
+  { title: "柑橘系果実", items: ["グレープフルーツ", "レモン", "ライム", "オレンジ"] },
+  { title: "有核果実", items: ["モモ", "アプリコット", "ネクタリン"] },
+  { title: "トロピカルフルーツ", items: ["バナナ", "ライチ", "マンゴー", "メロン", "パッションフルーツ", "パイナップル"] },
+  { title: "赤系果実", items: ["赤スグリ（レッドカラント）", "クランベリー", "ラズベリー", "イチゴ", "レッドチェリー", "レッドプラム"] },
+  { title: "黒系果実", items: ["黒スグリ（ブラックカラント）", "ブラックベリー", "ブルーベリー", "ブラックチェリー", "ブラックプラム"] },
+  { title: "草本植物", items: ["青ピーマン（トウガラシ）", "草", "トマトの葉", "アスパラガス"] },
+  { title: "ハーブ", items: ["ユーカリ", "ミント", "フェンネル", "ディル", "ドライハーブ"] },
+  { title: "香辛料", items: ["黒コショウ", "白コショウ", "リコリス"] },
+  { title: "果実の成熟度", items: ["未熟の果実", "熟した果実", "ドライフルーツ", "調理した果物"] },
+  { title: "その他", items: ["濡れた石", "キャンディー"] },
+  { title: "第2の香り", items : []},
+  { title: "酵母", items: ["ビスケット", "ペイストリー", "パン", "トースト", "パン生地", "チーズ", "ヨーグルト"] },
+  { title: "マロラクティック発酵", items: ["バター", "クリーム", "チーズ" ]},
+  { title: "オーク", items: ["ヴァニラ", "クローブ", "ココナッツ", "スギ", "焦がした木", "スモーク", "チョコレート", "コーヒー"] },
+  { title: "第3の香り", items : [] },
+  { title: "赤ワイン", items: ["ドライフルーツ", "皮革", "土", "キノコ", "肉類", "タバコ", "湿った葉", "森の下生え", "キャラメル"] }, 
+  { title: "白ワイン", items: ["ドライフルーツ", "マーマレード", "ガソリン", "シナモン", "生姜", "ナツメグ", "アーモンド", "ヘーゼルナッツ", "ハチミツ", "キャラメル"] },
+  { title: "意図的に酸化させたワイン", items:["アーモンド", "ヘーゼルナッツ","クルミ", "チョコレート", "コーヒー","キャラメル"] },
+  { title: "味覚", items : []},
+  { title: "甘味", items: ["辛口", "オフドライ", "半辛口・半甘口", "甘口"] },
+  { title: "酸味", items: ["低い", "中程度", "高い"] },
+  { title: "タンニン", items: ["少ない", "中程度", "多い"] },
+  { title: "アルコール", items: ["弱い", "中程度11～13.9", "強い"] },
+  { title: "ボディ", items: ["ライト", "ミディアム", "フル"] },
+  { title: "風味の強さ", items: ["弱い", "中程度", "強い"] },
+  { title: "後味", items: ["短い", "中程度", "長い"] },
+  { title: "結果", items : [] },
+  { title: "品質", items: ["悪い", "妥当", "良い", "非常に良質", "素晴らしい"] },
+  { title: "感想", items: ["コスパ良好", "飲みやすい（スルスル）", "ぜひまた飲みたい", "面白い","これはいいものだ"] }
+];
+
+
+const colors = ["#FFC0CB", "#F08080", "#FFA07A", "#20B2AA", "#778899"];
+let selections = {};
+
+function createButton(category, item) {
+  const btn = document.createElement("button");
+  btn.className = "button";
+  btn.textContent = item;
+  btn.onclick = function() {
+    if (!selections[category]) selections[category] = {};
+    const colorIndex = Object.keys(selections[category]).length % colors.length;
+    btn.style.backgroundColor = selections[category][item] ? "" : colors[colorIndex];
+    selections[category][item] = !selections[category][item];
+  };
+  document.getElementById("content").appendChild(btn);
+}
+
+function createCategory(category) {
+  const title = document.createElement("div");
+  title.className = "lineBreak";
+  title.innerHTML = `<strong>【${category.title}】</strong>`;
+  document.getElementById("content").appendChild(title);
+  category.items.forEach(item => createButton(category.title, item));
+}
+
+categories.forEach(category => createCategory(category));
+
+function copyToClipboard() {
+  const selectedText = Object.entries(selections).reduce((acc, [category, items]) => {
+    const selectedItems = Object.entries(items).filter(([_, selected]) => selected).map(([item]) => item);
+    if (selectedItems.length > 0) {
+      return `${acc}
+【${category}】 ${selectedItems.join(" ")}`;
+    }
+    return acc;
+  }, "").trim();
+
+  navigator.clipboard.writeText(selectedText).then(() => {
+    alert("クリップボードにコピーしました！");
+  }, (err) => {
+    console.error("コピーに失敗しました: ", err);
+  });
+}
+</script>
+</body>
+</html>
