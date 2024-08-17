@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -9,13 +8,37 @@
   .button { font-size: 30px; margin: 5px; padding: 5px 10px; border: 1px solid #ccc; cursor: pointer; }
   .copyButton { padding: 10px 20px; font-size: 30px; cursor: pointer; }
   .lineBreak { clear: both; display: block; }
+  .chartContainer { margin-top: 30px; }
+  .sliderContainer { margin-bottom: 10px; }
+   }
 </style>
 </head>
 <body>
 
 <div id="content"></div>
-<button class="copyButton" onclick="copyToClipboard()">クリップボードにコピー</button>
+<div class="chartContainer">
+  <canvas id="radarChart"></canvas>
+</div>
+<div class="sliderContainer">
+  <label for="sweetness">甘味:5ごく甘口 4甘口 3やや甘口 2やや辛口 1辛口 0ごく辛口 <span id="sweetnessValue">2.5</span></label>
+  <input type="range" id="sweetness" min="0" max="5" step="0.5" value="2.5" oninput="updateValue('sweetnessValue', this.value)">
+</div>
+<div class="sliderContainer">
+  <label for="tannin">渋苦み: <span id="tanninValue">2.5</span></label>
+  <input type="range" id="tannin" min="0" max="5" step="0.5" value="2.5" oninput="updateValue('tanninValue', this.value)">
+</div>
+<div class="sliderContainer">
+  <label for="acidity">酸味: <span id="acidityValue">2.5</span></label>
+  <input type="range" id="acidity" min="0" max="5" step="0.5" value="2.5" oninput="updateValue('acidityValue', this.value)">
+</div>
+<div class="sliderContainer">
+  <label for="alcohol">アルコール度数: <span id="alcoholValue">2.5</span></label>
+  <input type="range" id="alcohol" min="0" max="5" step="0.5" value="2.5" oninput="updateValue('alcoholValue', this.value)">
+</div>
+<button class="copyButton" onclick="copyToClipboard()">テキストをコピー</button>
+<button class="copyButton" onclick="copyChartToClipboard()">チャートをコピー</button>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const categories = [
   
@@ -23,43 +46,73 @@ const categories = [
   
   
   { title: "外観" ,items : []},
-  { title: "色の濃さ", items: ["淡い", "中程度", "濃い"] },
-  { title: "色（白）", items: ["レモン色", "黄金色", "琥珀色"] },
-  { title: "色（ロゼ）", items: ["ピンク色", "オレンジがかったピンク色", "オレンジ色"] },
-  { title: "色（赤）", items: ["紫色", "ルビー色", "ガーネット色", "トーニー色"] },
+  { title: "色の濃さ", items: ["濃い", "やや濃い","中位","やや淡い", "淡い"] },
+  { title: "色（白）", items: ["緑がかった黄色", "黄色", "黄金色","黄褐色","茶褐色"] },
+  { title: "色（ロゼ）", items: ["紫がかったピンク","ピンク","オレンジがかったピンク色", "茶がかったピンク"] },
+  { title: "色（赤）", items: ["紫がかった赤", "赤", "オレンジがかった赤", "赤褐色","茶褐色"] },
 
 
   
   { title: "香り" ,items : []},
   
   
-  { title: "香りの強さ", items: ["弱い", "中程度", "強い"] },
-  { title: "第一の香り",items : [] },
-  { title: "花", items: ["果樹の花", "バラ", "スミレ"] },
+  { title: "香りの高さ", items: ["高い", "中位", "低い"] },
+  { title: "香りの質", items: ["心地よい", "中庸な", "不快"] },
+　{ title: "果実", items: ["強い", "中位", "弱い"] },
+　{ title: "加熱感", items: ["生", "加熱加工", "ドライ"] },　
 
-  { title: "フルーティー　",items : [] },
-  { title: "加熱感", items: ["生", "加熱加工", "ドライ"] },
+  
 　{ title: "白ワイン　",items : [] },
-  { title: "柑橘系:GFはSBの特徴香", items: ["レモン", "グレープフルーツ"] },
-  { title: "小タネ系：メロンは発酵香が多く、マスカットは品種香", items: ["リンゴ", "洋ナシ", "メロン","マスカット"] },
+  { title: "柑橘系", items: ["レモン", "グレープフルーツ"] },
+  { title: "小タネ系：", items: ["リンゴ", "洋ナシ", "メロン","マスカット"] },
   { title: "核タネ系", items: ["モモ", "プラム"] },
-  { title: "熱帯系：PFはSBのライチはゲヴルツの特徴香", items: ["パイナップル", "ライチ", "マンゴー","パッションフルーツ"] },
+  { title: "熱帯系：", items: ["パイナップル", "ライチ", "マンゴー","パッションフルーツ"] },
   { title: "コンポート", items: ["リンゴのコンポート", "桃のコンポート"] },
   { title: "ジャム", items: ["アプリコットジャム", "オレンジジャム"] },
   { title: "ドライ", items: ["干しパイナップル", "干し杏"] },
+
 　{ title: "赤ワイン　",items : [] },
 　{ title: "赤系果実", items: ["クランベリー", "ラズベリー", "イチゴ"] },
   { title: "黒系果実", items: ["ブルーベリー", "ブラックカラント", "ブラックベリー"] },
   
-  { title: "緑色系果実", items: ["リンゴ", "洋ナシ", "西洋スグリ", "ブドウ"] },
-  { title: "柑橘系果実", items: ["グレープフルーツ", "レモン", "ライム", "オレンジ"] },
-  { title: "有核果実", items: ["モモ", "アプリコット", "ネクタリン"] },
-  { title: "トロピカルフルーツ", items: ["バナナ", "ライチ", "マンゴー", "メロン", "パッションフルーツ", "パイナップル"] },
-  { title: "赤系果実", items: ["赤スグリ（レッドカラント）", "クランベリー", "ラズベリー", "イチゴ", "レッドチェリー", "レッドプラム"] },
+　{ title: "植物　",items : [] },
+  { title: "生の葉", items: ["青草", "葉野菜", "フレッシュハーブ", "ミント","ユーカリ","がリーグ"] },
+  { title: "生の野菜", items: ["ピーマン", "根菜"] },
+  { title: "加熱野菜", items: ["アスパラガス", "ソラマメ","タマネギ","ブロッコリー","カリフラワー"] },
+  { title: "湿った葉", items: ["森の下草"] },
+  { title: "乾いた葉", items: ["紅茶", "葉巻","枯葉"] },
  
-  { title: "草本植物", items: ["青ピーマン（トウガラシ）", "草", "トマトの葉", "アスパラガス"] },
-  { title: "ハーブ", items: ["ユーカリ", "ミント", "フェンネル", "ディル", "ドライハーブ"] },
-  { title: "香辛料", items: ["黒コショウ", "白コショウ", "リコリス"] },
+  { title: "木", items: ["西洋スギシーダー", "針葉樹"] },
+  { title: "根", items: ["甘草リコリス"] },
+
+　{ title: "実", items: ["スパイシー", "粒コショウ","ヴァニラ","ココナッツミルク","シナモン","丁子クローヴ"] },
+  { title: "菌", items: ["キノコ", "カビ"] },
+
+  { title: "花", items: [] },
+  { title: "花", items: ["生花","ドライフラワー"] },
+  { title: "蜜", items: ["蜜", "シロップ","蜂蜜","蜜蠟","キャンディ"] },
+
+  { title: "動物", items: [] },
+  { title: "肉", items: ["ジビエ", "生肉","干し肉"] },
+  { title: "魚", items: ["出汁", "かつお節"] },
+  { title: "動物", items: ["馬の汗", "納屋"] },
+  { title: "乳製品", items: ["バター", "ヨーグルト","クリーム"] },
+
+ 
+  { title: "鉱物", items: ["ミネラル", "ペトロル","インク","墨汁","鉛筆の芯"] },
+
+  { title: "焦焙性", items: ["ナッツ", "トースト","アーモンド","コーヒー","煙","タール"] },
+
+  { title: "オフフレーヴァー", items: ["フィノ", "シードル","クルミの皮","ヴィネガー","接着剤","除光液","石けん"] },
+  { title: "還元", items: ["強い刺激", "ゆで卵の黄身","硫黄温泉"] },　
+
+
+
+
+
+
+
+
   { title: "果実の成熟度", items: ["未熟の果実", "熟した果実", "ドライフルーツ", "調理した果物"] },
   { title: "その他", items: ["濡れた石", "キャンディー"] },
   { title: "第2の香り", items : []},
@@ -83,14 +136,19 @@ const categories = [
   { title: "感想", items: ["コスパ良好", "飲みやすい（スルスル）", "ぜひまた飲みたい", "面白い","これはいいものだ"] }
 ];
 
-
 const colors = ["#FFC0CB", "#F08080", "#FFA07A", "#20B2AA", "#778899"];
 let selections = {};
+let values = {
+  alcohol: 2.5,
+  sweetness: 2.5,
+  tannin: 2.5,
+  acidity: 2.5
+};
 
 function createButton(category, item) {
   const btn = document.createElement("button");
   btn.className = "button";
-  btn.textContent = item;
+  btn.textContent = item.replace(/{{([^}]+)}}/g, '$1'); // {{ }} 内のテキストだけを表示
   btn.onclick = function() {
     if (!selections[category]) selections[category] = {};
     const colorIndex = Object.keys(selections[category]).length % colors.length;
@@ -103,29 +161,114 @@ function createButton(category, item) {
 function createCategory(category) {
   const title = document.createElement("div");
   title.className = "lineBreak";
-  title.innerHTML = `<strong>【${category.title}】</strong>`;
+  title.innerHTML = `<strong>${category.title.replace(/{{([^}]+)}}/g, '$1')}</strong>`; // {{ }} 内のテキストだけを表示
   document.getElementById("content").appendChild(title);
   category.items.forEach(item => createButton(category.title, item));
 }
 
 categories.forEach(category => createCategory(category));
 
+function updateValue(id, value) {
+  document.getElementById(id).textContent = value;
+  values[id.replace('Value', '')] = parseFloat(value);
+  updateChart();
+}
+
+function updateChart() {
+  const data = {
+    labels: ['甘味', '渋苦み', '酸味', 'アルコール度数'],  // 順序を甘味、渋苦み、酸味、アルコール度数に変更
+    datasets: [{
+      label: 'ワインの特徴',
+      data: [values.sweetness, values.tannin, values.acidity, values.alcohol],
+      backgroundColor: 'rgba(179, 181, 198, 0.2)',
+      borderColor: 'rgba(179, 181, 198, 1)',
+      pointBackgroundColor: 'rgba(179, 181, 198, 1)',
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: 'rgba(179, 181, 198, 1)'
+    }]
+  };
+
+  const options = {
+    scales: {
+      r: {
+        min: 0,
+        max: 5,
+        ticks: {
+          stepSize: 1,
+	  fontSize: 12
+        },
+        pointLabels: {
+          fontSize: 16
+        }
+      }
+    },
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false
+  };
+
+  if (radarChart) {
+    radarChart.data = data;
+    radarChart.options = options;
+    radarChart.update();
+  } else {
+    radarChart = new Chart(document.getElementById('radarChart'), {
+      type: 'radar',
+      data: data,
+      options: options
+    });
+  }
+}
+
 function copyToClipboard() {
   const selectedText = Object.entries(selections).reduce((acc, [category, items]) => {
     const selectedItems = Object.entries(items).filter(([_, selected]) => selected).map(([item]) => item);
     if (selectedItems.length > 0) {
-      return `${acc}
-【${category}】 ${selectedItems.join(" ")}`;
+      const filteredItems = selectedItems.map(item => {
+        // "{{ }}" で囲まれた部分を除去
+        return item.replace(/{{[^}]+}}/g, '');
+      }).join(" ");
+      const filteredCategory = category.replace(/{{[^}]+}}/g, ''); // カテゴリのタイトルからも{{}}を除外
+      return `${acc}\n【${filteredCategory}】 ${filteredItems}`;
     }
     return acc;
   }, "").trim();
 
-  navigator.clipboard.writeText(selectedText).then(() => {
-    alert("クリップボードにコピーしました！");
+  const chartData = `
+甘味: ${values.sweetness}
+渋苦み: ${values.tannin}
+酸味: ${values.acidity}
+アルコール度数: ${values.alcohol}
+  `;
+
+  const fullText = `${selectedText}\n\n${chartData}`.trim();
+
+  navigator.clipboard.writeText(fullText).then(() => {
+    alert("テキストをクリップボードにコピーしました！");
   }, (err) => {
     console.error("コピーに失敗しました: ", err);
   });
 }
+
+function copyChartToClipboard() {
+  const radarChartElement = document.getElementById('radarChart');
+  radarChartElement.toBlob(function(blob) {
+    const item = new ClipboardItem({'image/png': blob});
+    navigator.clipboard.write([item]).then(() => {
+      alert("チャートをクリップボードにコピーしました！");
+    }).catch(err => {
+      console.error('チャートのコピーに失敗しました: ', err);
+    });
+  });
+}
+
+let radarChart;
+
+document.addEventListener("DOMContentLoaded", function() {
+  updateChart(); // 初期状態のチャートを表示
+});
 </script>
+
 </body>
 </html>
